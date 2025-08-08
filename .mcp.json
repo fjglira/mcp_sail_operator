@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "sail-operator": {
+      "type": "stdio",
+      "command": "/Users/frherrer/Documents/repos/mcp_sail_operator/mcp-sail-operator",
+      "args": [],
+      "env": {}
+    }
+  }
+}
