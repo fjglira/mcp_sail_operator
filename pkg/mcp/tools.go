@@ -15,7 +15,7 @@ import (
 func RegisterAllTools(server *mcp.Server, k8sClient *kubernetes.Clientset, dynamicClient dynamic.Interface) {
 	registerK8sTools(server, k8sClient)
 	registerSailOperatorTools(server, dynamicClient)
-	
+
 	log.Println("Registered all MCP tools")
 }
 
@@ -29,11 +29,11 @@ func registerK8sTools(server *mcp.Server, k8sClient *kubernetes.Clientset) {
 
 	// List namespaces tool
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "list_namespaces", 
+		Name:        "list_namespaces",
 		Description: "List all namespaces in the Kubernetes cluster",
 	}, k8shandlers.ListNamespaces(k8sClient))
 
-	// Get namespace details tool  
+	// Get namespace details tool
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "get_namespace_details",
 		Description: "Get detailed information about namespaces (all or specific namespace)",
@@ -63,6 +63,12 @@ func registerK8sTools(server *mcp.Server, k8sClient *kubernetes.Clientset) {
 		Description: "List configmaps in the cluster with optional namespace and label filtering",
 	}, k8shandlers.ListConfigMaps(k8sClient))
 
+	// List events tool
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "list_events",
+		Description: "List recent Kubernetes events with optional selectors",
+	}, k8shandlers.ListEvents(k8sClient))
+
 	// Get pod logs tool
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "get_pod_logs",
@@ -75,7 +81,7 @@ func registerK8sTools(server *mcp.Server, k8sClient *kubernetes.Clientset) {
 		Description: "Check the status of workloads in the Istio mesh including sidecar injection status",
 	}, k8shandlers.CheckMeshWorkloads(k8sClient))
 
-	log.Println("Registered Kubernetes tools: test_k8s_connection, list_namespaces, get_namespace_details, list_pods, list_services, list_deployments, list_configmaps, get_pod_logs, check_mesh_workloads")
+	log.Println("Registered Kubernetes tools: test_k8s_connection, list_namespaces, get_namespace_details, list_pods, list_services, list_deployments, list_configmaps, list_events, get_pod_logs, check_mesh_workloads")
 }
 
 // registerSailOperatorTools registers Sail Operator CRD-related MCP tools
