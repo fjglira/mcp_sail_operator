@@ -70,7 +70,7 @@ A comprehensive MCP server that provides Claude with read-only access to Istio S
    {
      "mcpServers": {
        "sail-operator": {
-         "command": "/Users/frherrer/Documents/repos/mcp_sail_operator/mcp-sail-operator",
+         "command": "/path/to/your/mcp-sail-operator/mcp-sail-operator",
          "args": [],
          "env": {}
        }
@@ -79,6 +79,7 @@ A comprehensive MCP server that provides Claude with read-only access to Istio S
    ```
    
    **Important Notes:**
+   - Replace `/path/to/your/mcp-sail-operator/` with the actual path to your project directory
    - Use the absolute path to your compiled `mcp-sail-operator` binary
    - Ensure the binary is built with `make build` before configuring
    - Claude Code will restart the MCP server automatically when needed
