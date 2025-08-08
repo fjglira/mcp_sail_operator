@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"strconv"
@@ -428,4 +429,105 @@ func truncateString(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen-3] + "..."
+}
+
+// GetPodLogs gets logs from a specific pod and container
+func GetPodLogs(k8sClient *kubernetes.Clientset) func(ctx context.Context, cc *mcp.ServerSession, params *mcp.CallToolParamsFor[types.GetPodLogsParams]) (*mcp.CallToolResultFor[types.GetPodLogsResult], error) {
+	return func(ctx context.Context, cc *mcp.ServerSession, params *mcp.CallToolParamsFor[types.GetPodLogsParams]) (*mcp.CallToolResultFor[types.GetPodLogsResult], error) {
+		// Validate required parameters
+		if params.Arguments.Namespace == "" {
+			return &mcp.CallToolResultFor[types.GetPodLogsResult]{
+				Content: []mcp.Content{&mcp.TextContent{
+					Text: "Error: namespace parameter is required",
+				}},
+			}, nil
+		}
+
+		if params.Arguments.PodName == "" {
+			return &mcp.CallToolResultFor[types.GetPodLogsResult]{
+				Content: []mcp.Content{&mcp.TextContent{
+					Text: "Error: pod_name parameter is required",
+				}},
+			}, nil
+		}
+
+		// Set up log options
+		logOptions := &corev1.PodLogOptions{
+			Follow:    params.Arguments.Follow,
+			Previous:  params.Arguments.Previous,
+		}
+
+		// Set container if specified
+		if params.Arguments.Container != "" {
+			logOptions.Container = params.Arguments.Container
+		}
+
+		// Set tail lines if specified (default to 50 if not specified)
+		if params.Arguments.Lines > 0 {
+			logOptions.TailLines = &params.Arguments.Lines
+		} else {
+			defaultLines := int64(50)
+			logOptions.TailLines = &defaultLines
+		}
+
+		// Set since seconds if specified
+		if params.Arguments.SinceSeconds > 0 {
+			logOptions.SinceSeconds = &params.Arguments.SinceSeconds
+		}
+
+		// Get the logs
+		req := k8sClient.CoreV1().Pods(params.Arguments.Namespace).GetLogs(params.Arguments.PodName, logOptions)
+		
+		podLogs, err := req.Stream(ctx)
+		if err != nil {
+			return &mcp.CallToolResultFor[types.GetPodLogsResult]{
+				Content: []mcp.Content{&mcp.TextContent{
+					Text: fmt.Sprintf("Error getting logs for pod '%s' in namespace '%s': %v", 
+						params.Arguments.PodName, params.Arguments.Namespace, err),
+				}},
+			}, nil
+		}
+		defer podLogs.Close()
+
+		// Read the logs
+		var logLines []string
+		scanner := bufio.NewScanner(podLogs)
+		for scanner.Scan() {
+			logLines = append(logLines, scanner.Text())
+		}
+
+		if err := scanner.Err(); err != nil {
+			return &mcp.CallToolResultFor[types.GetPodLogsResult]{
+				Content: []mcp.Content{&mcp.TextContent{
+					Text: fmt.Sprintf("Error reading logs for pod '%s' in namespace '%s': %v", 
+						params.Arguments.PodName, params.Arguments.Namespace, err),
+				}},
+			}, nil
+		}
+
+		// Format output
+		var output string
+		if len(logLines) == 0 {
+			output = fmt.Sprintf("No logs found for pod '%s' in namespace '%s'", 
+				params.Arguments.PodName, params.Arguments.Namespace)
+			if params.Arguments.Container != "" {
+				output += fmt.Sprintf(" (container: %s)", params.Arguments.Container)
+			}
+		} else {
+			header := fmt.Sprintf("=== Logs for pod '%s' in namespace '%s' ===", 
+				params.Arguments.PodName, params.Arguments.Namespace)
+			if params.Arguments.Container != "" {
+				header += fmt.Sprintf(" (container: %s)", params.Arguments.Container)
+			}
+			header += fmt.Sprintf("\nShowing last %d lines:\n\n", len(logLines))
+			
+			output = header + strings.Join(logLines, "\n")
+		}
+
+		return &mcp.CallToolResultFor[types.GetPodLogsResult]{
+			Content: []mcp.Content{&mcp.TextContent{
+				Text: output,
+			}},
+		}, nil
+	}
 }

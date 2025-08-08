@@ -158,3 +158,48 @@ type ListConfigMapsResult struct {
 	Count      int             `json:"count,omitempty"`
 	Error      string          `json:"error,omitempty"`
 }
+
+// GetPodLogsParams represents parameters for getting pod logs
+type GetPodLogsParams struct {
+	Namespace    string `json:"namespace"`
+	PodName      string `json:"pod_name"`
+	Container    string `json:"container,omitempty"`
+	Lines        int64  `json:"lines,omitempty"`
+	Follow       bool   `json:"follow,omitempty"`
+	Previous     bool   `json:"previous,omitempty"`
+	SinceSeconds int64  `json:"since_seconds,omitempty"`
+}
+
+// GetPodLogsResult represents the result of getting pod logs
+type GetPodLogsResult struct {
+	Status string `json:"status"`
+	Logs   string `json:"logs,omitempty"`
+	Error  string `json:"error,omitempty"`
+}
+
+// CheckMeshWorkloadsParams represents parameters for checking mesh workloads
+type CheckMeshWorkloadsParams struct {
+	Namespace    string `json:"namespace,omitempty"`
+	LabelSelector string `json:"label_selector,omitempty"`
+}
+
+// WorkloadInfo represents information about a workload in the mesh
+type WorkloadInfo struct {
+	Name            string            `json:"name"`
+	Namespace       string            `json:"namespace"`
+	Kind            string            `json:"kind"`
+	SidecarInjected bool              `json:"sidecar_injected"`
+	SidecarReady    bool              `json:"sidecar_ready"`
+	MeshStatus      string            `json:"mesh_status"`
+	Labels          map[string]string `json:"labels,omitempty"`
+	Annotations     map[string]string `json:"annotations,omitempty"`
+	Issues          []string          `json:"issues,omitempty"`
+}
+
+// CheckMeshWorkloadsResult represents the result of checking mesh workloads
+type CheckMeshWorkloadsResult struct {
+	Status    string         `json:"status"`
+	Workloads []WorkloadInfo `json:"workloads,omitempty"`
+	Count     int            `json:"count,omitempty"`
+	Error     string         `json:"error,omitempty"`
+}

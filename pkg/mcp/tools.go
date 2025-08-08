@@ -63,7 +63,19 @@ func registerK8sTools(server *mcp.Server, k8sClient *kubernetes.Clientset) {
 		Description: "List configmaps in the cluster with optional namespace and label filtering",
 	}, k8shandlers.ListConfigMaps(k8sClient))
 
-	log.Println("Registered Kubernetes tools: test_k8s_connection, list_namespaces, get_namespace_details, list_pods, list_services, list_deployments, list_configmaps")
+	// Get pod logs tool
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "get_pod_logs",
+		Description: "Get logs from a specific pod and optionally a specific container",
+	}, k8shandlers.GetPodLogs(k8sClient))
+
+	// Check mesh workloads tool
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "check_mesh_workloads",
+		Description: "Check the status of workloads in the Istio mesh including sidecar injection status",
+	}, k8shandlers.CheckMeshWorkloads(k8sClient))
+
+	log.Println("Registered Kubernetes tools: test_k8s_connection, list_namespaces, get_namespace_details, list_pods, list_services, list_deployments, list_configmaps, get_pod_logs, check_mesh_workloads")
 }
 
 // registerSailOperatorTools registers Sail Operator CRD-related MCP tools

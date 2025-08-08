@@ -28,18 +28,13 @@ func GetIstioStatus(dynamicClient dynamic.Interface) func(ctx context.Context, c
 		var istios []types.IstioStatus
 
 		if params.Arguments.Name != "" {
-			// Get specific Istio resource
-			namespace := params.Arguments.Namespace
-			if namespace == "" {
-				namespace = "istio-system" // Default namespace
-			}
-
-			istio, err := dynamicClient.Resource(istioGVR).Namespace(namespace).Get(ctx, params.Arguments.Name, metav1.GetOptions{})
+			// Get specific Istio resource (cluster-scoped)
+			istio, err := dynamicClient.Resource(istioGVR).Get(ctx, params.Arguments.Name, metav1.GetOptions{})
 			if err != nil {
 				if errors.IsNotFound(err) {
 					return &mcp.CallToolResultFor[types.GetIstioStatusResult]{
 						Content: []mcp.Content{&mcp.TextContent{
-							Text: fmt.Sprintf("Istio resource '%s' not found in namespace '%s'", params.Arguments.Name, namespace),
+							Text: fmt.Sprintf("Istio resource '%s' not found (cluster-scoped)", params.Arguments.Name),
 						}},
 					}, nil
 				}
@@ -53,15 +48,8 @@ func GetIstioStatus(dynamicClient dynamic.Interface) func(ctx context.Context, c
 			status := parseIstioStatus(istio)
 			istios = append(istios, status)
 		} else {
-			// Get all Istio resources
-			var istioList *unstructured.UnstructuredList
-			var err error
-
-			if params.Arguments.Namespace != "" {
-				istioList, err = dynamicClient.Resource(istioGVR).Namespace(params.Arguments.Namespace).List(ctx, metav1.ListOptions{})
-			} else {
-				istioList, err = dynamicClient.Resource(istioGVR).List(ctx, metav1.ListOptions{})
-			}
+			// Get all Istio resources (cluster-scoped)
+			istioList, err := dynamicClient.Resource(istioGVR).List(ctx, metav1.ListOptions{})
 
 			if err != nil {
 				if errors.IsNotFound(err) {
