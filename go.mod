@@ -1,4 +1,4 @@
-module github.com/company/mcp-sail-operator
+module github.com/frherrer/mcp-sail-operator
 
 go 1.24.5
 

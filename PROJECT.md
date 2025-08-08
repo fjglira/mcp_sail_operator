@@ -28,16 +28,31 @@ Currently, there are no existing MCP servers for Kubernetes or Istio in the offi
 - **Version Management**: Check version compatibility and upgrade paths
 - **Security Analysis**: Review security policies and configurations
 
-### MCP Tools to Implement
+### MCP Tools Implemented
 
-1. `list_istio_resources` - List all Istio-related custom resources
-2. `get_istio_status` - Get detailed status of specific Istio installations
-3. `get_mesh_config` - Retrieve mesh configuration and settings
-4. `check_istio_health` - Perform health checks on Istio components
-5. `validate_config` - Validate Istio resource configurations
-6. `get_revision_info` - Get information about specific Istio revisions
-7. `list_workloads` - List workloads using the service mesh
-8. `get_security_policies` - Retrieve security policies and configurations
+**Kubernetes Tools:**
+1. `test_k8s_connection` - Test cluster connectivity and version
+2. `list_namespaces` - List all namespaces in the cluster
+3. `get_namespace_details` - Get detailed namespace information
+4. `list_pods` - List pods with status, ready state, and filtering options
+5. `list_services` - List services with networking and port information
+6. `list_deployments` - List deployments with replica and status information
+7. `list_configmaps` - List configmaps with data keys and filtering options
+
+**Sail Operator Tools:**
+4. `list_sailoperator_resources` - List all Sail Operator CRD resources
+5. `get_istio_status` - Get detailed status of Istio installations
+6. `check_sailoperator_health` - Comprehensive health checks
+
+### MCP Tools Planned
+
+1. `get_mesh_config` - Retrieve mesh configuration and settings
+2. `validate_config` - Validate Istio resource configurations
+3. `get_revision_info` - Get information about specific Istio revisions
+4. `list_workloads` - List workloads using the service mesh
+5. `get_security_policies` - Retrieve security policies and configurations
+6. `list_pods` - List pods in namespaces
+7. `get_service_status` - Get service mesh sidecar injection status
 
 ## Technology Stack
 
@@ -54,6 +69,11 @@ Claude Client
      | MCP Protocol
      |
 MCP Sail Operator Server
+     |
+  pkg/handlers/
+  ├── k8s/          (Basic K8s operations)
+  ├── istio/        (Mesh operations)
+  └── sailoperator/ (CRD handlers)
      |
      | Kubernetes API
      |
@@ -112,9 +132,11 @@ This project is in active development as part of a learning day initiative. Curr
 - [x] Go module initialization with MCP SDK and Kubernetes dependencies
 - [x] Basic MCP server implementation with stdio transport
 - [x] Kubernetes client integration with kubeconfig support
-- [x] Basic tools: test_k8s_connection, list_namespaces, and get_namespace_details
+- [x] Complete Kubernetes resource tools: connectivity, namespaces, pods, services, deployments, configmaps
+- [x] Sail Operator CRD handlers: list_sailoperator_resources, get_istio_status, check_sailoperator_health
 - [x] Build system with Makefile
-- [ ] Sail Operator CRD handlers (Istio, IstioRevision, IstioCNI, Ztunnel)
+- [x] Refactored codebase into organized package structure with dynamic client support
+- [x] Comprehensive health checking and status monitoring for Istio mesh
 - [ ] Istio mesh status and health check tools
 - [ ] Configuration validation and troubleshooting tools
 - [ ] Testing and validation with live cluster

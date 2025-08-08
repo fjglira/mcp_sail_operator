@@ -11,9 +11,19 @@ An MCP (Model Context Protocol) server that provides Claude with access to Istio
 
 ## Available MCP Tools
 
+### Kubernetes Tools
 - `test_k8s_connection` - Test connectivity to the Kubernetes cluster
 - `list_namespaces` - List all namespaces in the cluster
 - `get_namespace_details` - Get detailed information about a specific namespace
+- `list_pods` - List pods with optional namespace and label filtering
+- `list_services` - List services with optional namespace and label filtering
+- `list_deployments` - List deployments with optional namespace and label filtering
+- `list_configmaps` - List configmaps with optional namespace and label filtering
+
+### Sail Operator Tools
+- `list_sailoperator_resources` - List Sail Operator CRD resources (Istio, IstioRevision, IstioCNI, ZTunnel)
+- `get_istio_status` - Get detailed status information about Istio installations
+- `check_sailoperator_health` - Perform comprehensive health checks on Sail Operator managed resources
 
 ## Prerequisites
 
@@ -93,14 +103,22 @@ The server uses standard Kubernetes client configuration:
 Once configured, you can use the MCP tools in Claude Code conversations:
 
 ```
-# Test your cluster connection
+# Basic Kubernetes operations
 Can you test my Kubernetes cluster connection?
-
-# List namespaces
 Show me all namespaces in my cluster
-
-# Get namespace details
 Give me detailed information about the default namespace
+
+# Kubernetes resources
+List all pods in the istio-system namespace
+Show me services in the default namespace
+List deployments with label app=nginx
+Show me all configmaps in kube-system
+
+# Sail Operator and Istio operations
+List all Sail Operator resources in my cluster
+Show me the status of my Istio installations
+Perform a health check on my Sail Operator managed resources
+Check if my Istio mesh is healthy
 ```
 
 ## Project Status
@@ -109,9 +127,11 @@ This project is under active development as part of a learning day initiative. C
 
 - ✅ Basic MCP server implementation with stdio transport
 - ✅ Kubernetes client integration with kubeconfig support
-- ✅ Three working MCP tools: connectivity, namespace listing, and namespace details
+- ✅ Ten working MCP tools: Complete Kubernetes resource management and Sail Operator CRD support
 - ✅ Claude Code integration and local setup instructions
-- 🚧 Sail Operator CRD handlers (Istio, IstioRevision, IstioCNI, Ztunnel)
+- ✅ Refactored codebase with organized package structure for scalability
+- ✅ Sail Operator CRD handlers (Istio, IstioRevision, IstioCNI, Ztunnel)
+- ✅ Comprehensive health checking and status monitoring for Istio mesh
 - 🚧 Istio mesh status and health check tools
 - ⏳ Advanced troubleshooting and configuration validation features
 
