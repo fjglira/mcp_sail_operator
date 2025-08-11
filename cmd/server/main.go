@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -17,9 +18,9 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	sailoperatorhandlers "github.com/frherrer/mcp-sail-operator/pkg/handlers/sailoperator"
 	mcptools "github.com/frherrer/mcp-sail-operator/pkg/mcp"
 	"github.com/frherrer/mcp-sail-operator/pkg/types"
-	sailoperatorhandlers "github.com/frherrer/mcp-sail-operator/pkg/handlers/sailoperator"
 )
 
 var (
@@ -43,7 +44,7 @@ USAGE:
 	}
 
 	// Add global kubeconfig flag
-	rootCmd.PersistentFlags().StringVar(&kubeconfigPath, "kubeconfig", "", 
+	rootCmd.PersistentFlags().StringVar(&kubeconfigPath, "kubeconfig", "",
 		"Path to kubeconfig file (default: ~/.kube/config or KUBECONFIG env var)")
 
 	// Add CLI subcommands
@@ -109,6 +110,24 @@ func initKubernetesClients(kubeconfigPath string) (*kubernetes.Clientset, dynami
 		log.Println("Using in-cluster configuration")
 	}
 
+	// Basic rate limits from env or defaults
+	// QPS (float32) and Burst (int) help avoid throttling on larger clusters
+	if qpsEnv := os.Getenv("K8S_CLIENT_QPS"); qpsEnv != "" {
+		if qpsVal, err := strconv.ParseFloat(qpsEnv, 32); err == nil {
+			config.QPS = float32(qpsVal)
+		}
+	} else {
+		config.QPS = 20.0
+	}
+
+	if burstEnv := os.Getenv("K8S_CLIENT_BURST"); burstEnv != "" {
+		if burstVal, err := strconv.Atoi(burstEnv); err == nil {
+			config.Burst = burstVal
+		}
+	} else {
+		config.Burst = 40
+	}
+
 	// Create the standard clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -131,6 +150,7 @@ func createLogsCommand() *cobra.Command {
 	var namespace, container string
 	var lines int64
 	var previous bool
+	var follow bool
 
 	cmd := &cobra.Command{
 		Use:   "logs <pod-name>",
@@ -144,7 +164,7 @@ EXAMPLES:
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			podName := args[0]
-			
+
 			// Default namespace if not specified
 			if namespace == "" {
 				namespace = "default"
@@ -157,7 +177,7 @@ EXAMPLES:
 			}
 
 			// Get logs using the same logic as our MCP handler
-			err = getPodLogsDirectly(k8sClient, namespace, podName, container, lines, previous)
+			err = getPodLogsDirectly(k8sClient, namespace, podName, container, lines, previous, follow)
 			if err != nil {
 				log.Fatalf("Failed to get pod logs: %v", err)
 			}
@@ -168,6 +188,7 @@ EXAMPLES:
 	cmd.Flags().StringVarP(&container, "container", "c", "", "Container name (optional)")
 	cmd.Flags().Int64VarP(&lines, "lines", "l", 50, "Number of lines to show")
 	cmd.Flags().BoolVar(&previous, "previous", false, "Show logs from previous container instance")
+	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "Stream logs until interrupted")
 
 	return cmd
 }
@@ -279,9 +300,10 @@ EXAMPLES:
 // Helper functions for direct CLI execution
 
 // getPodLogsDirectly gets logs from a pod directly
-func getPodLogsDirectly(k8sClient *kubernetes.Clientset, namespace, podName, container string, lines int64, previous bool) error {
+func getPodLogsDirectly(k8sClient *kubernetes.Clientset, namespace, podName, container string, lines int64, previous bool, follow bool) error {
 	logOptions := &corev1.PodLogOptions{
 		Previous: previous,
+		Follow:   follow,
 	}
 
 	if container != "" {
@@ -339,7 +361,7 @@ func listPodsDirectly(k8sClient *kubernetes.Clientset, namespace, labelSelector 
 	}
 
 	fmt.Printf("Found %d pods:\n\n", len(podList.Items))
-	fmt.Printf("%-30s %-15s %-10s %-8s %-10s %s\n", 
+	fmt.Printf("%-30s %-15s %-10s %-8s %-10s %s\n",
 		"NAME", "NAMESPACE", "STATUS", "READY", "RESTARTS", "AGE")
 	fmt.Println(strings.Repeat("-", 90))
 
@@ -377,30 +399,30 @@ func listPodsDirectly(k8sClient *kubernetes.Clientset, namespace, labelSelector 
 func checkHealthDirectly(dynamicClient dynamic.Interface, namespace string) error {
 	// Create mock MCP server session and params
 	ctx := context.Background()
-	
+
 	// Use the existing health check handler directly
 	healthHandler := sailoperatorhandlers.CheckSailOperatorHealth(dynamicClient)
-	
+
 	// Create parameters
 	params := &mcp.CallToolParamsFor[types.CheckSailOperatorHealthParams]{
 		Arguments: types.CheckSailOperatorHealthParams{
 			Namespace: namespace,
 		},
 	}
-	
+
 	// Call the handler
 	result, err := healthHandler(ctx, nil, params)
 	if err != nil {
 		return fmt.Errorf("health check failed: %v", err)
 	}
-	
+
 	// Print the result
 	if len(result.Content) > 0 {
 		if textContent, ok := result.Content[0].(*mcp.TextContent); ok {
 			fmt.Print(textContent.Text)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -408,10 +430,10 @@ func checkHealthDirectly(dynamicClient dynamic.Interface, namespace string) erro
 func getStatusDirectly(dynamicClient dynamic.Interface, istioName, namespace string) error {
 	// Create mock MCP server session and params
 	ctx := context.Background()
-	
+
 	// Use the existing status handler directly
 	statusHandler := sailoperatorhandlers.GetIstioStatus(dynamicClient)
-	
+
 	// Create parameters
 	params := &mcp.CallToolParamsFor[types.GetIstioStatusParams]{
 		Arguments: types.GetIstioStatusParams{
@@ -419,20 +441,20 @@ func getStatusDirectly(dynamicClient dynamic.Interface, istioName, namespace str
 			Namespace: namespace,
 		},
 	}
-	
+
 	// Call the handler
 	result, err := statusHandler(ctx, nil, params)
 	if err != nil {
 		return fmt.Errorf("status check failed: %v", err)
 	}
-	
+
 	// Print the result
 	if len(result.Content) > 0 {
 		if textContent, ok := result.Content[0].(*mcp.TextContent); ok {
 			fmt.Print(textContent.Text)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -454,4 +476,3 @@ func formatAgeSimple(timestamp metav1.Time) string {
 		return fmt.Sprintf("%dd", int(duration.Hours()/24))
 	}
 }
-

@@ -45,7 +45,7 @@ type GetNamespaceDetailsResult struct {
 
 // ListPodsParams represents parameters for listing pods
 type ListPodsParams struct {
-	Namespace    string `json:"namespace,omitempty"`
+	Namespace     string `json:"namespace,omitempty"`
 	LabelSelector string `json:"label_selector,omitempty"`
 }
 
@@ -74,21 +74,21 @@ type ListPodsResult struct {
 
 // ListServicesParams represents parameters for listing services
 type ListServicesParams struct {
-	Namespace    string `json:"namespace,omitempty"`
+	Namespace     string `json:"namespace,omitempty"`
 	LabelSelector string `json:"label_selector,omitempty"`
 }
 
 // ServiceInfo represents information about a service
 type ServiceInfo struct {
-	Name         string            `json:"name"`
-	Namespace    string            `json:"namespace"`
-	Type         string            `json:"type"`
-	ClusterIP    string            `json:"cluster_ip,omitempty"`
-	ExternalIP   []string          `json:"external_ip,omitempty"`
-	Ports        []ServicePort     `json:"ports,omitempty"`
-	Labels       map[string]string `json:"labels,omitempty"`
-	Selector     map[string]string `json:"selector,omitempty"`
-	CreatedAt    string            `json:"created_at"`
+	Name       string            `json:"name"`
+	Namespace  string            `json:"namespace"`
+	Type       string            `json:"type"`
+	ClusterIP  string            `json:"cluster_ip,omitempty"`
+	ExternalIP []string          `json:"external_ip,omitempty"`
+	Ports      []ServicePort     `json:"ports,omitempty"`
+	Labels     map[string]string `json:"labels,omitempty"`
+	Selector   map[string]string `json:"selector,omitempty"`
+	CreatedAt  string            `json:"created_at"`
 }
 
 // ServicePort represents a service port
@@ -110,7 +110,7 @@ type ListServicesResult struct {
 
 // ListDeploymentsParams represents parameters for listing deployments
 type ListDeploymentsParams struct {
-	Namespace    string `json:"namespace,omitempty"`
+	Namespace     string `json:"namespace,omitempty"`
 	LabelSelector string `json:"label_selector,omitempty"`
 }
 
@@ -137,7 +137,7 @@ type ListDeploymentsResult struct {
 
 // ListConfigMapsParams represents parameters for listing configmaps
 type ListConfigMapsParams struct {
-	Namespace    string `json:"namespace,omitempty"`
+	Namespace     string `json:"namespace,omitempty"`
 	LabelSelector string `json:"label_selector,omitempty"`
 }
 
@@ -179,7 +179,7 @@ type GetPodLogsResult struct {
 
 // CheckMeshWorkloadsParams represents parameters for checking mesh workloads
 type CheckMeshWorkloadsParams struct {
-	Namespace    string `json:"namespace,omitempty"`
+	Namespace     string `json:"namespace,omitempty"`
 	LabelSelector string `json:"label_selector,omitempty"`
 }
 
@@ -202,4 +202,38 @@ type CheckMeshWorkloadsResult struct {
 	Workloads []WorkloadInfo `json:"workloads,omitempty"`
 	Count     int            `json:"count,omitempty"`
 	Error     string         `json:"error,omitempty"`
+}
+
+// ListEventsParams represents parameters for listing Events
+type ListEventsParams struct {
+	Namespace         string `json:"namespace,omitempty"`
+	FieldSelector     string `json:"field_selector,omitempty"`
+	InvolvedKind      string `json:"involved_kind,omitempty"`
+	InvolvedName      string `json:"involved_name,omitempty"`
+	InvolvedNamespace string `json:"involved_namespace,omitempty"`
+	Type              string `json:"type,omitempty"` // Normal|Warning
+	Reason            string `json:"reason,omitempty"`
+	SinceSeconds      int64  `json:"since_seconds,omitempty"`
+	Limit             int32  `json:"limit,omitempty"`
+}
+
+// EventInfo represents a summarized Kubernetes event
+type EventInfo struct {
+	Type              string `json:"type"`
+	Reason            string `json:"reason"`
+	Message           string `json:"message"`
+	Count             int32  `json:"count"`
+	FirstSeen         string `json:"first_seen,omitempty"`
+	LastSeen          string `json:"last_seen,omitempty"`
+	InvolvedKind      string `json:"involved_kind,omitempty"`
+	InvolvedName      string `json:"involved_name,omitempty"`
+	InvolvedNamespace string `json:"involved_namespace,omitempty"`
+}
+
+// ListEventsResult represents the result of listing events
+type ListEventsResult struct {
+	Status string      `json:"status"`
+	Events []EventInfo `json:"events,omitempty"`
+	Count  int         `json:"count,omitempty"`
+	Error  string      `json:"error,omitempty"`
 }
